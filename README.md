@@ -120,5 +120,4 @@ to validate the NIF before joining coalition ops.
 - Expand event handlers in `lib/ryujin/consumer.ex` to coordinate with Clairemont and Providentia.
 - Integrate Rust-backed analytics (e.g., alliance scoring) through the NIF interface.
 - Document shared protocols or vocab the trio should use when negotiating with other guilds.
-
-Happy hacking! Keep the helper scripts in sync as Ryujin’s diplomatic repertoire grows.
+- Add a database. It will most likely be postgresSQL
