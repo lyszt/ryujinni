@@ -4,8 +4,12 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN_DIR="$PROJECT_DIR/vendor/bin"
 STREAMLINK_BIN="$PROJECT_DIR/vendor/streamlink-venv/bin"
+LEGACY_BIN="$PROJECT_DIR/vendor/ffmpeg/bin"
 
 export PATH="$BIN_DIR:$STREAMLINK_BIN:$PATH"
+if [[ -d "$LEGACY_BIN" ]]; then
+  export PATH="$LEGACY_BIN:$PATH"
+fi
 
 missing=0
 for tool in ffmpeg ffprobe youtube-dl streamlink; do

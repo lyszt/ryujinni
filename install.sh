@@ -13,12 +13,27 @@ STREAMLINK_VENV="$VENDOR_ROOT/streamlink-venv"
 
 mkdir -p "$BIN_DIR" "$CACHE_DIR"
 
+LEGACY_BIN_DIR="$VENDOR_ROOT/ffmpeg/bin"
+if [[ -d "$LEGACY_BIN_DIR" ]]; then
+  echo "♻️  Migrating legacy vendor/ffmpeg layout..."
+  for exec in ffmpeg ffprobe youtube-dl; do
+    if [[ -x "$LEGACY_BIN_DIR/$exec" && ! -x "$BIN_DIR/$exec" ]]; then
+      cp "$LEGACY_BIN_DIR/$exec" "$BIN_DIR/"
+      chmod +x "$BIN_DIR/$exec"
+    fi
+  done
+fi
+
 # ────────────────────────────────────────────────
 # 1. Prepare Elixir project
 # ────────────────────────────────────────────────
-echo "📦 Syncing Mix dependencies..."
-mix deps.get
-mix compile
+if [[ "${SKIP_MIX:-0}" != "1" ]]; then
+  echo "📦 Syncing Mix dependencies..."
+  mix deps.get
+  mix compile
+else
+  echo "⏭️  SKIP_MIX=1 set; skipping Mix dependency sync."
+fi
 
 # ────────────────────────────────────────────────
 # 2. Download and stage FFmpeg locally
@@ -61,6 +76,12 @@ else
   echo "✅ youtube-dl already present at $YTDL_PATH; skipping download."
 fi
 
+if ! "$YTDL_PATH" --version >/dev/null 2>&1; then
+  echo "⚠️  Existing youtube-dl at $YTDL_PATH failed to run; re-downloading..."
+  curl -sSL "$YTDL_URL" -o "$YTDL_PATH"
+  chmod +x "$YTDL_PATH"
+fi
+
 "$YTDL_PATH" --version
 
 # ────────────────────────────────────────────────
@@ -80,6 +101,14 @@ if [[ ! -x "$STREAMLINK_VENV/bin/streamlink" ]]; then
 else
   echo "✅ Streamlink already present in $STREAMLINK_VENV; upgrading..."
   "$STREAMLINK_VENV/bin/pip" install --upgrade streamlink >/dev/null
+fi
+
+if ! "$STREAMLINK_VENV/bin/streamlink" --version >/dev/null 2>&1; then
+  echo "⚠️  Streamlink in $STREAMLINK_VENV appears broken; reinstalling..."
+  rm -rf "$STREAMLINK_VENV"
+  python3 -m venv "$STREAMLINK_VENV"
+  "$STREAMLINK_VENV/bin/pip" install --upgrade pip
+  "$STREAMLINK_VENV/bin/pip" install --upgrade streamlink
 fi
 
 "$STREAMLINK_VENV/bin/streamlink" --version | head -n 1
