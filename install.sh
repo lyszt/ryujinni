@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+
+if [ -z "${BASH_VERSION:-}" ]; then
+  echo "❌ This script must be run with bash. Try: bash install.sh" >&2
+  exit 1
+fi
+
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -62,66 +68,35 @@ fi
 "$BIN_DIR/ffmpeg" -version | head -n 1
 
 # ────────────────────────────────────────────────
-# 3. Download youtube-dl
+# 3. Install media helpers (Streamlink + yt-dlp)
 # ────────────────────────────────────────────────
-echo "📺  Ensuring youtube-dl is available..."
-YTDL_PATH="$BIN_DIR/youtube-dl"
-YTDL_URL="https://yt-dl.org/downloads/latest/youtube-dl"
-
-if [[ ! -x "$YTDL_PATH" ]]; then
-  curl -sSL "$YTDL_URL" -o "$YTDL_PATH"
-  chmod +x "$YTDL_PATH"
-  echo "✅ youtube-dl saved to $YTDL_PATH."
-else
-  echo "✅ youtube-dl already present at $YTDL_PATH; skipping download."
-fi
-
-if ! "$YTDL_PATH" --version >/dev/null 2>&1; then
-  echo "⚠️  Existing youtube-dl at $YTDL_PATH failed to run; re-downloading..."
-  curl -sSL "$YTDL_URL" -o "$YTDL_PATH"
-  chmod +x "$YTDL_PATH"
-fi
-
-"$YTDL_PATH" --version
-
-# ────────────────────────────────────────────────
-# 4. Install Streamlink (Python)
-# ────────────────────────────────────────────────
-echo "🌊  Ensuring Streamlink virtualenv is ready..."
+echo "🌊  Ensuring Python media virtualenv is ready..."
 if ! command -v python3 >/dev/null 2>&1; then
   echo "❌ python3 is required to set up Streamlink. Install python3 and rerun."
   exit 1
 fi
 
-if [[ ! -x "$STREAMLINK_VENV/bin/streamlink" ]]; then
+if [[ ! -x "$STREAMLINK_VENV/bin/python" ]]; then
   python3 -m venv "$STREAMLINK_VENV"
-  "$STREAMLINK_VENV/bin/pip" install --upgrade pip
-  "$STREAMLINK_VENV/bin/pip" install --upgrade streamlink
-  echo "✅ Streamlink installed in $STREAMLINK_VENV."
-else
-  echo "✅ Streamlink already present in $STREAMLINK_VENV; upgrading..."
-  "$STREAMLINK_VENV/bin/pip" install --upgrade streamlink >/dev/null
 fi
 
-if ! "$STREAMLINK_VENV/bin/streamlink" --version >/dev/null 2>&1; then
-  echo "⚠️  Streamlink in $STREAMLINK_VENV appears broken; reinstalling..."
-  rm -rf "$STREAMLINK_VENV"
-  python3 -m venv "$STREAMLINK_VENV"
-  "$STREAMLINK_VENV/bin/pip" install --upgrade pip
-  "$STREAMLINK_VENV/bin/pip" install --upgrade streamlink
-fi
+"$STREAMLINK_VENV/bin/pip" install --upgrade pip >/dev/null
+"$STREAMLINK_VENV/bin/pip" install --upgrade streamlink yt-dlp >/dev/null
 
-"$STREAMLINK_VENV/bin/streamlink" --version | head -n 1
+STREAMLINK_BIN_PATH="$STREAMLINK_VENV/bin/streamlink"
+YT_DLP_BIN_PATH="$STREAMLINK_VENV/bin/yt-dlp"
+YTDL_SHIM="$BIN_DIR/youtube-dl"
 
-# ────────────────────────────────────────────────
-# 5. (Optional) Build release or assets
-# ────────────────────────────────────────────────
-# mix assets.deploy
-# mix release
+ln -sf "$YT_DLP_BIN_PATH" "$YTDL_SHIM"
+chmod +x "$YTDL_SHIM"
+
+"$STREAMLINK_BIN_PATH" --version | head -n 1
+"$YT_DLP_BIN_PATH" --version | head -n 1
+
+echo "✅ Streamlink installed in $STREAMLINK_VENV."
+echo "✅ yt-dlp linked at $YTDL_SHIM."
+
 
 cat <<INSTRUCTIONS
-ℹ️  Add the following to your shell profile to use the bundled tooling:
-    export PATH="$BIN_DIR:$STREAMLINK_VENV/bin:\$PATH"
-
 🎉 Installation complete!
 INSTRUCTIONS
