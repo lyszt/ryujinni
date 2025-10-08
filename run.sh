@@ -2,7 +2,22 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-export PATH="$PROJECT_DIR/vendor/ffmpeg/bin:$PATH"
+BIN_DIR="$PROJECT_DIR/vendor/bin"
+STREAMLINK_BIN="$PROJECT_DIR/vendor/streamlink-venv/bin"
+
+export PATH="$BIN_DIR:$STREAMLINK_BIN:$PATH"
+
+missing=0
+for tool in ffmpeg ffprobe youtube-dl streamlink; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "⚠️  Missing dependency '$tool'. Run ./install.sh first." >&2
+    missing=1
+  fi
+done
+
+if [[ $missing -eq 1 ]]; then
+  exit 1
+fi
 
 mix deps.update --all
 mix compile

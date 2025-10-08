@@ -1,1 +1,1 @@
-# Keeps the vendor directory in version control without bundling binaries.
+# Keeps the vendor directory in version control without bundling downloaded binaries or virtualenvs.
