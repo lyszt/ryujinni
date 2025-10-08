@@ -23,5 +23,10 @@ ryujin-*.tar
 /tmp/
 
 .env
+
+# Local FFmpeg artifacts
+ffmpeg*.tar.xz
+ffmpeg-*-static/
+vendor/ffmpeg/
 # Rust binary artifacts
 /target/

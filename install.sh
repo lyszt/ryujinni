@@ -1,35 +1,48 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "🔧 Starting installation for Bot..."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "🔧 Starting installation for Ryujin..."
 
 # ────────────────────────────────────────────────
-# 1. Clean and rebuild Elixir project
+# 1. Prepare Elixir project
 # ────────────────────────────────────────────────
-rm -rf _build
-mix deps.clean --all
+echo "📦 Syncing Mix dependencies..."
 mix deps.get
-mix deps.update --all
 mix compile
 
 # ────────────────────────────────────────────────
-# 2. Download and install FFmpeg
+# 2. Download and stage FFmpeg locally
 # ────────────────────────────────────────────────
-echo "🎞️  Installing FFmpeg..."
+echo "🎞️  Ensuring FFmpeg is available locally..."
 FFMPEG_URL="https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"
-FFMPEG_ARCHIVE="ffmpeg.tar.xz"
+VENDOR_DIR="$SCRIPT_DIR/vendor/ffmpeg"
+BIN_DIR="$VENDOR_DIR/bin"
+CACHE_DIR="$VENDOR_DIR/cache"
+ARCHIVE_PATH="$CACHE_DIR/ffmpeg.tar.xz"
 
-curl -L "$FFMPEG_URL" -o "$FFMPEG_ARCHIVE"
-tar -xf "$FFMPEG_ARCHIVE"
+mkdir -p "$BIN_DIR" "$CACHE_DIR"
 
-FFMPEG_DIR=$(tar -tf "$FFMPEG_ARCHIVE" | head -1 | cut -f1 -d"/")
-sudo mv "$FFMPEG_DIR/ffmpeg" /usr/local/bin/
-sudo mv "$FFMPEG_DIR/ffprobe" /usr/local/bin/
+if [[ ! -x "$BIN_DIR/ffmpeg" || ! -x "$BIN_DIR/ffprobe" ]]; then
+  echo "⬇️  Downloading FFmpeg archive..."
+  curl -sSL "$FFMPEG_URL" -o "$ARCHIVE_PATH"
 
-rm -rf "$FFMPEG_ARCHIVE" "$FFMPEG_DIR"
+  TMP_DIR="$(mktemp -d 2>/dev/null || mktemp -d -t ffmpeg)"
+  tar -xf "$ARCHIVE_PATH" -C "$TMP_DIR" --strip-components=1
 
-echo "✅ FFmpeg installed successfully."
-ffmpeg -version | head -n 1
+  cp "$TMP_DIR/ffmpeg" "$BIN_DIR/"
+  cp "$TMP_DIR/ffprobe" "$BIN_DIR/"
+  chmod +x "$BIN_DIR/ffmpeg" "$BIN_DIR/ffprobe"
+
+  rm -rf "$TMP_DIR" "$ARCHIVE_PATH"
+  echo "✅ FFmpeg binaries staged in $BIN_DIR."
+else
+  echo "✅ FFmpeg already present at $BIN_DIR; skipping download."
+fi
+
+"$BIN_DIR/ffmpeg" -version | head -n 1
 
 # ────────────────────────────────────────────────
 # 3. (Optional) Build release or assets
@@ -37,5 +50,9 @@ ffmpeg -version | head -n 1
 # mix assets.deploy
 # mix release
 
-echo "🎉 Installation complete!"
+cat <<INSTRUCTIONS
+ℹ️  Add the following to your shell profile to use the bundled FFmpeg:
+    export PATH="$BIN_DIR:\$PATH"
 
+🎉 Installation complete!
+INSTRUCTIONS
