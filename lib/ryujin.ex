@@ -1,16 +1,11 @@
 defmodule Ryujin do
   @moduledoc """
-  Documentation for `Ryujin`.
+  Ryujin keeps the contexts that define your domain and business logic while
+  wiring together the Discord consumer and Phoenix web interface.
   """
 
   @doc """
-  Hello world.
-
-  ## Examples
-
-      iex> Ryujin.hello()
-      :world
-
+  Simple sanity check used by doctests.
   """
   def hello do
     :world

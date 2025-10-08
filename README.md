@@ -18,6 +18,7 @@ and is designed to extend into Rust-backed features for high-performance tasks.
 ## Prerequisites
 
 - Elixir ≥ 1.18 (with a matching Erlang/OTP release)
+- PostgreSQL (defaults to `postgres`/`postgres` on `localhost`)
 - Python 3 (virtualenv used for Streamlink + yt-dlp)
 - `curl` and `tar` (FFmpeg download)
 - Cargo/Rust toolchain if you intend to expand the native extension
@@ -91,7 +92,12 @@ The script:
 
 - Exports the vendor tool directories to `PATH`.
 - Verifies `ffmpeg`, `ffprobe`, `youtube-dl` (yt-dlp), and `streamlink` are present.
-- Updates Mix dependencies, compiles, and starts the bot via `iex -S mix`.
+- Fetches dependencies, runs `mix ecto.create`/`mix ecto.migrate`, compiles, and starts the bot via
+  `iex -S mix`.
+- Boots the node with a short name (`ryujin_dev@127.0.0.1` by default) and cookie (`ryujin_cookie`),
+  making it easy to attach Observer or remote IEx sessions.
+- Falls back to FileSystem's polling backend automatically if `inotifywait` is not installed, so
+  live reload still works (albeit without inotify performance).
 
 While running, Ryujin registers `Ryujin.Consumer` to respond to allied greetings—
 extend `lib/ryujin/consumer.ex` with the guild workflows relevant to your coalition.
@@ -114,10 +120,19 @@ to validate the NIF before joining coalition ops.
 - **“command not found” for the helper scripts** – make sure you ran `chmod +x install.sh run.sh`.
 - **Installer complains about Python** – install `python3` and ensure it’s on PATH.
 - **Stale binaries** – remove `vendor/` and re-run `./install.sh` to fetch a fresh toolchain.
+- **`database "ryujin_dev" does not exist`** – ensure PostgreSQL is running and rerun `./run.sh`
+  (it runs `mix ecto.create` before boot). For custom credentials, adjust `config/dev.exs`.
+- **Need Observer** – with the named node and cookie, open a second terminal and run
+  `iex --sname observer --cookie ryujin_cookie` followed by `:observer.start()`, then connect to
+  `ryujin_dev@127.0.0.1`. Adjust `NODE_NAME`/`ERLANG_COOKIE` env vars in `run.sh` if you prefer
+  different identifiers.
+- **`inotify-tools` warning** – the dev config auto-switches to a polling watcher when `inotifywait`
+  is missing, or install it system-wide (e.g. `sudo apt install inotify-tools`) to restore the
+  faster inotify backend.
 
 ## Roadmap Notes
 
 - Expand event handlers in `lib/ryujin/consumer.ex` to coordinate with Clairemont and Providentia.
 - Integrate Rust-backed analytics (e.g., alliance scoring) through the NIF interface.
 - Document shared protocols or vocab the trio should use when negotiating with other guilds.
-- Add a database. It will most likely be postgresSQL
+- Flesh out database schemas and migrations for alliance state.

@@ -29,6 +29,12 @@ if [[ $missing -eq 1 ]]; then
   exit 1
 fi
 
-mix deps.update --all
+mix deps.get
+mix ecto.create
+mix ecto.migrate
 mix compile
-iex -S mix
+
+NODE_NAME="${NODE_NAME:-ryujin_dev}"
+ERLANG_COOKIE="${ERLANG_COOKIE:-ryujin_cookie}"
+
+iex --sname "$NODE_NAME" --cookie "$ERLANG_COOKIE" -S mix phx.server
