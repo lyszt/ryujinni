@@ -10,5 +10,6 @@ source!([
   System.get_env()
   ])
 
-config :ryujin, :bot_token,
-    bot_token: env!("BOT_TOKEN", :string!)
+config :nostrum,
+  token: env!("DISCORD_TOKEN", :string!),
+  gateway_intents: [:direct_messages, :guild_messages, :message_content]

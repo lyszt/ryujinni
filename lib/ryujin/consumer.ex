@@ -1,5 +1,5 @@
-defmodule MyBot.Consumer do
-  @behaviour Nostrum.Consumer
+defmodule Ryujin.Consumer do
+  use Nostrum.Consumer
 
   alias Nostrum.Api.Message
 
@@ -12,7 +12,4 @@ defmodule MyBot.Consumer do
         :ignore
     end
   end
-
-  # Ignore any other events
-  def handle_event(_), do: :ok
 end
