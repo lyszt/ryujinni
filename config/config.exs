@@ -38,4 +38,6 @@ config :logger, :default_formatter,
 
 config :phoenix, :json_library, Jason
 
+config :elixir, :reload_modules, true
+
 import_config "#{config_env()}.exs"
