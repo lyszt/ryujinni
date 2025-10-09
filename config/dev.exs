@@ -11,7 +11,8 @@ config :ryujin, Ryujin.Repo,
   database: "ryujin_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: 10,
+  parameters: [search_path: "ag_catalog,\"$user\",public"]
 
 config :ryujin, RyujinWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT") || "4000")],

@@ -19,6 +19,7 @@ and is designed to extend into Rust-backed features for high-performance tasks.
 
 - Elixir ≥ 1.18 (with a matching Erlang/OTP release)
 - PostgreSQL (defaults to `postgres`/`postgres` on `localhost`)
+  - Install the [AGE extension](https://github.com/apache/age) if you plan to use graph queries; the repo ships with a migration that enables it.
 - Python 3 (virtualenv used for Streamlink + yt-dlp)
 - `curl` and `tar` (FFmpeg download)
 - Cargo/Rust toolchain if you intend to expand the native extension
@@ -101,6 +102,29 @@ The script:
 
 While running, Ryujin registers `Ryujin.Consumer` to respond to allied greetings—
 extend `lib/ryujin/consumer.ex` with the guild workflows relevant to your coalition.
+
+## PostgreSQL AGE Integration
+
+The repo includes a migration (`priv/repo/migrations/*_enable_postgres_age.exs`) that enables the
+[AGE extension](https://github.com/apache/age) and provisions a default `ryujin_graph`. To get it
+running:
+
+1. Install AGE on your PostgreSQL server (follow the [official quickstart](https://age.apache.org/quickstart/installing/)).
+2. Update `postgresql.conf` with `shared_preload_libraries = 'age'` and restart the database.
+3. Run `./run.sh` or `mix ecto.setup` to execute the migration. The repo configuration sets the
+   `search_path` to include `ag_catalog`, so AGE functions are immediately available to Ecto.
+
+You can issue Cypher queries through `Repo.query/2`, for example:
+
+```elixir
+Repo.query!("""
+  SELECT *
+  FROM cypher('ryujin_graph', $$
+    MATCH (n)
+    RETURN n
+  $$) AS (node ag_catalog.agtype);
+""")
+```
 
 ## Native Extension (Rust)
 

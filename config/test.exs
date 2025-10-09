@@ -6,7 +6,8 @@ config :ryujin, Ryujin.Repo,
   hostname: "localhost",
   database: "ryujin_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+  pool_size: System.schedulers_online() * 2,
+  parameters: [search_path: "ag_catalog,\"$user\",public"]
 
 config :ryujin, RyujinWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
