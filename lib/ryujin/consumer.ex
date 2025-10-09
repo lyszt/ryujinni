@@ -4,12 +4,9 @@ defmodule Ryujin.Consumer do
   alias Nostrum.Api.Message
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
-    case msg.content do
-      "!hello" ->
-        {:ok, _message} = Message.create(msg.channel_id, "Hello, world!")
-
-      _ ->
-        :ignore
+    lowered_msg = String.downcase(msg.content)
+    if String.contains?(lowered_msg, "ryu") or String.contains?(lowered_msg, "ryujinni") do
+      {:ok, _message} = Message.create(msg.channel_id, "Hello!")
     end
   end
 end
