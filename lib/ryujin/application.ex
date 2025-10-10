@@ -4,7 +4,6 @@ defmodule Ryujin.Application do
   @moduledoc false
 
   use Application
-  alias Nostrum.Struct.AutoModerationRule.Action
   alias Nostrum.Api.Self
 
   @impl true
@@ -15,19 +14,22 @@ defmodule Ryujin.Application do
       {DNSCluster, query: Application.get_env(:ryujin, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Ryujin.PubSub},
       RyujinWeb.Endpoint,
-      Ryujin.Consumer
+      Ryujin.Consumer,
+      Ryujin.CommandRegister
     ]
 
     opts = [strategy: :one_for_one, name: Ryujin.Supervisor]
-    Supervisor.start_link(children, opts)
+    {:ok, pid} = Supervisor.start_link(children, opts)
 
     Task.start(
       fn ->
         {:ok, active_servers} = Self.guilds()
-        :timer.sleep(5000)
+        :timer.sleep(1000)
         Self.update_status(:online, "as noticias do império lygoniano ao #{Enum.random(active_servers).name}.", 1, "https://www.youtube.com/watch?v=5JTSAK5hmW4")
       end
+
     )
+    {:ok, pid}
   end
 
   @impl true
@@ -35,4 +37,5 @@ defmodule Ryujin.Application do
     RyujinWeb.Endpoint.config_change(changed, removed)
     :ok
   end
+
 end

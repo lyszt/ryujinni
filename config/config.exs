@@ -40,4 +40,6 @@ config :phoenix, :json_library, Jason
 
 config :elixir, :reload_modules, true
 
+config :nostrum, :youtubedl, "yt-dlp"
+
 import_config "#{config_env()}.exs"
