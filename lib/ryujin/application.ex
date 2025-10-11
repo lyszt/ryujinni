@@ -12,10 +12,12 @@ defmodule Ryujin.Application do
       RyujinWeb.Telemetry,
       Ryujin.Repo,
       {DNSCluster, query: Application.get_env(:ryujin, :dns_cluster_query) || :ignore},
+      {Finch, name: Ryujin.Finch},
       {Phoenix.PubSub, name: Ryujin.PubSub},
       RyujinWeb.Endpoint,
       Ryujin.Consumer,
       Ryujin.CommandRegister
+
     ]
 
     opts = [strategy: :one_for_one, name: Ryujin.Supervisor]
@@ -25,7 +27,7 @@ defmodule Ryujin.Application do
       fn ->
         {:ok, active_servers} = Self.guilds()
         :timer.sleep(1000)
-        Self.update_status(:online, "as noticias do império lygoniano ao #{Enum.random(active_servers).name}.", 1, "https://www.youtube.com/watch?v=5JTSAK5hmW4")
+        Self.update_status(:online, "as noticias do império lygoniano ao #{Enum.random(active_servers).name}.", 1, "https://youtu.be/47AVNwXG3CA")
       end
 
     )

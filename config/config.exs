@@ -34,7 +34,8 @@ config :tailwind,
 
 config :logger, :default_formatter,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  metadata: [:request_id],
+  inspect: [limit: 8]
 
 config :phoenix, :json_library, Jason
 

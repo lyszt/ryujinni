@@ -11,17 +11,22 @@ defmodule Ryujin.CommandRegister do
   @commands [
     %{
       name: "join",
-      description: "Have the bot join your voice channel"
+      description: "Faz o bot entrar no seu canal de voz."
     },
     %{
-      name: "ping",
-      description: "Replies with pong!"
+      name: "play",
+      description: "Toque uma bela música para seus amigos."
     },
     %{
       name: "leave",
-      description: "Have the bot leave the current voice channel"
+      description: "Faz o bot sair do canal de voz atual."
+    },
+    %{
+      name: "camara_eventos",
+      description: "Veja uma lista de eventos previstos nos diversos orgãos da câmara de deputados."
     }
   ]
+
 
 
   def start_link(_args) do

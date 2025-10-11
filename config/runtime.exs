@@ -28,11 +28,28 @@ streamlink_exec =
 
 config :nostrum,
   token: env!("DISCORD_TOKEN", :string!),
-  gateway_intents: [:direct_messages, :guild_messages, :message_content],
   ffmpeg: ffmpeg_exec,
   youtubedl: ytdl_exec,
-  streamlink: streamlink_exec
-
+  streamlink: streamlink_exec,
+  gateway_intents: [
+      :guilds,
+      :guild_members,
+      :guild_bans,
+      :guild_emojis,
+      :guild_integrations,
+      :guild_webhooks,
+      :guild_invites,
+      :guild_voice_states,
+      :guild_presences,
+      :guild_messages,
+      :guild_message_reactions,
+      :guild_message_typing,
+      :direct_messages,
+      :direct_message_reactions,
+      :direct_message_typing,
+      :message_content,
+      :guild_scheduled_events
+    ]
 if System.get_env("PHX_SERVER") do
   config :ryujin, RyujinWeb.Endpoint, server: true
 end
