@@ -1,162 +1,100 @@
-# Ryujin
+# Ryujin 
+![Traveler traveling across the fields of a foreign land](https://i.pinimg.com/736x/66/ae/1c/66ae1c45850b48307a8927b25cabd976.jpg)
 
-![Traveler traveling across the fields of a foreign land](https://i.pinimg.com/1200x/1c/df/0d/1cdf0d48e184a436a19cc61ff07c60a1.jpg)
+Ryujin is the diplomatic liaison module for the Clairemont bot. While other modules in the system handle security and administration, Ryujin's focus is on cultivating allied relationships, coordinating joint initiatives, and maintaining calm in inter-guild channels. It is built on Elixir with Nostrum and designed to extend into Rust-backed features for high-performance tasks.
 
-Ryujin is the diplomatic liaison of the Clairemont · Providentia · Ryujin bot trio.
-While Clairemont keeps watch over personal spaces and Providentia handles hostile actors,
-Ryujin focuses on cultivating allied relationships, coordinating joint initiatives,
-and keeping inter-guild channels calm. The bot is built on Elixir with [`nostrum`](https://hex.pm/packages/nostrum)
-and is designed to extend into Rust-backed features for high-performance tasks.
+◆ **Features**
 
-## Highlights
+* **Alliance-Focused Automation**: Intents are preconfigured for direct message and guild-level relationship management.
 
-- **Alliance-first automation** – DM and guild intents preconfigured for relationship management.
-- **Voice-ready** – Bundled FFmpeg, Streamlink, and yt-dlp support for dispatching audio briefings.
-- **Rust acceleration** – `native/ryujin` houses Rustler NIFs for compute-heavy diplomacy aides.
-- **Scripted setup** – Repeatable install/run scripts keep toolchains local to the repo.
+* **Voice Capable**: Bundled with FFmpeg, Streamlink, and yt-dlp support for dispatching audio.
 
-## Prerequisites
+* **Rust Accelerated**: Includes a `native/ryujin` crate for Rustler NIFs to handle compute-heavy tasks.
 
-- Elixir ≥ 1.18 (with a matching Erlang/OTP release)
-- PostgreSQL (defaults to `postgres`/`postgres` on `localhost`)
-  - Install the [AGE extension](https://github.com/apache/age) if you plan to use graph queries; the repo ships with a migration that enables it.
-- Python 3 (virtualenv used for Streamlink + yt-dlp)
-- `curl` and `tar` (FFmpeg download)
-- Cargo/Rust toolchain if you intend to expand the native extension
+* **Scripted Setup**: Local `install.sh` and `run.sh` scripts manage the toolchain and environment for repeatable setups.
 
-Ensure both `install.sh` and `run.sh` are executable so the helper scripts run cleanly:
+◆ **Prerequisites**
 
-```bash
+* Elixir ≥ 1.18 (with a matching Erlang/OTP release)
+
+* PostgreSQL (defaults to `postgres`/`postgres` on `localhost`)
+
+* Python 3 (for Streamlink + yt-dlp in a virtualenv)
+
+* `curl` and `tar` (for the FFmpeg download)
+
+* Rust toolchain (if modifying the native extension)
+
+Ensure the helper scripts are executable before starting:
+
+
 chmod +x install.sh run.sh
-```
 
-## Configuration
 
-Secrets live under `envs/`. The runtime config loads:
+◆ **Configuration**
 
-- `envs/.env` – shared defaults
-- `envs/<MIX_ENV>.env` – environment-specific overrides (e.g. `envs/dev.env`)
+Configuration is loaded from `envs/`. The runtime merges `envs/.env` (shared defaults) and an environment-specific file like `envs/dev.env`.
 
-At minimum, define your Discord bot token:
+At minimum, you must define your Discord token in `envs/.env`:
 
-```dotenv
-# envs/.env
+
 DISCORD_TOKEN=YOUR_DISCORD_TOKEN
-```
 
-The runtime script exports `vendor/bin` and the virtualenv so all bundled tools are
-found without touching your global PATH.
 
-## Configuration
+The runtime scripts automatically add the local `vendor/bin` and Python virtualenv to your `PATH`.
 
-Secrets live under `envs/`. The runtime config automatically merges:
+◆ **Installation**
 
-- `envs/.env` – shared defaults
-- `envs/<MIX_ENV>.env` – environment-specific overrides (e.g. `envs/dev.env`)
+The installer fetches Mix dependencies and stages the required media binaries locally in the `vendor/` directory.
 
-At minimum, define your Discord bot token:
 
-```dotenv
-# envs/.env
-DISCORD_TOKEN=YOUR_DISCORD_TOKEN
-```
-
-Runtime scripts export `vendor/bin` and the virtualenv, so the bundled tooling is
-available without touching your global PATH.
-
-## Installation
-
-Run the installer to fetch Mix dependencies and stage the media binaries locally:
-
-```bash
 ./install.sh
-```
 
-The installer will:
 
-1. Fetch and compile the Mix dependencies (skip with `SKIP_MIX=1 ./install.sh`).
-2. Download the static FFmpeg build into `vendor/bin`.
-3. Create `vendor/streamlink-venv`, install Streamlink and yt-dlp, and link
-   `vendor/bin/youtube-dl` to the yt-dlp executable.
+This script will:
 
-If Nostrum logs warnings about missing tools, rerun the installer to refresh everything.
+1. Fetch and compile Mix dependencies.
 
-## Running the Bot
+2. Download a static FFmpeg build.
 
-Launch Ryujin with:
+3. Create a Python virtualenv for Streamlink and yt-dlp.
 
-```bash
+◆ **Running in Development**
+
+Launch the bot for development using the run script:
+
+
 ./run.sh
-```
 
-The script:
 
-- Exports the vendor tool directories to `PATH`.
-- Verifies `ffmpeg`, `ffprobe`, `youtube-dl` (yt-dlp), and `streamlink` are present.
-- Fetches dependencies, runs `mix ecto.create`/`mix ecto.migrate`, compiles, and starts the bot via
-  `iex -S mix`.
-- Boots the node with a short name (`ryujin_dev@127.0.0.1` by default) and cookie (`ryujin_cookie`),
-  making it easy to attach Observer or remote IEx sessions.
-- Falls back to FileSystem's polling backend automatically if `inotifywait` is not installed, so
-  live reload still works (albeit without inotify performance).
+The script verifies that all tools (`ffmpeg`, `yt-dlp`, etc.) are present, runs database migrations, and starts the Phoenix application via `iex -S mix`.
 
-While running, Ryujin registers `Ryujin.Consumer` to respond to allied greetings—
-extend `lib/ryujin/consumer.ex` with the guild workflows relevant to your coalition.
+◆ **PostgreSQL AGE Integration**
 
-## PostgreSQL AGE Integration
+The project includes a migration to enable the [Apache AGE extension](https://github.com/apache/age) for graph queries. After installing AGE on your PostgreSQL server, the `run.sh` script or `mix ecto.setup` will enable it in the database.
 
-The repo includes a migration (`priv/repo/migrations/*_enable_postgres_age.exs`) that enables the
-[AGE extension](https://github.com/apache/age) and provisions a default `ryujin_graph`. To get it
-running:
+You can then issue Cypher queries through `Ecto.Repo.query/2`:
 
-1. Install AGE on your PostgreSQL server (follow the [official quickstart](https://age.apache.org/quickstart/installing/)).
-2. Update `postgresql.conf` with `shared_preload_libraries = 'age'` and restart the database.
-3. Run `./run.sh` or `mix ecto.setup` to execute the migration. The repo configuration sets the
-   `search_path` to include `ag_catalog`, so AGE functions are immediately available to Ecto.
 
-You can issue Cypher queries through `Repo.query/2`, for example:
-
-```elixir
 Repo.query!("""
-  SELECT *
-  FROM cypher('ryujin_graph', $$
-    MATCH (n)
-    RETURN n
-  $$) AS (node ag_catalog.agtype);
+SELECT *
+FROM cypher('ryujin_graph', $$
+MATCH (n) RETURN n
+$$) AS (node ag_catalog.agtype);
 """)
-```
 
-## Native Extension (Rust)
 
-The `native/ryujin` crate is wired up with [Rustler](https://github.com/rusterlium/rustler):
+◆ **Native Rust Extension**
 
-- `Cargo.toml` defines the NIF crate; build it with `mix compile` or `cargo build`.
-- `src/lib.rs` currently exposes a sample `add/2` NIF; expand this with
-  diplomacy-focused utilities (rate calculations, scoring heuristics, etc.).
-- Add new NIF functions and expose them in Elixir via `lib/ryujin.ex`.
+The `native/ryujin` crate is integrated with [Rustler](https://github.com/rusterlium/rustler). Elixir and Rust code is compiled together with `mix compile`. Add new NIFs in `src/lib.rs` and expose them to Elixir through the `lib/ryujin.ex` module.
 
-Rust artifacts are ignored by `.gitignore`, so builds remain local to each machine.
-When you introduce additional Rust dependencies, run `cargo check` under `native/ryujin`
-to validate the NIF before joining coalition ops.
+◆ **Troubleshooting**
 
-## Troubleshooting
+* **"command not found"**: Ensure you ran `chmod +x install.sh run.sh`.
 
-- **“command not found” for the helper scripts** – make sure you ran `chmod +x install.sh run.sh`.
-- **Installer complains about Python** – install `python3` and ensure it’s on PATH.
-- **Stale binaries** – remove `vendor/` and re-run `./install.sh` to fetch a fresh toolchain.
-- **`database "ryujin_dev" does not exist`** – ensure PostgreSQL is running and rerun `./run.sh`
-  (it runs `mix ecto.create` before boot). For custom credentials, adjust `config/dev.exs`.
-- **Need Observer** – with the named node and cookie, open a second terminal and run
-  `iex --sname observer --cookie ryujin_cookie` followed by `:observer.start()`, then connect to
-  `ryujin_dev@127.0.0.1`. Adjust `NODE_NAME`/`ERLANG_COOKIE` env vars in `run.sh` if you prefer
-  different identifiers.
-- **`inotify-tools` warning** – the dev config auto-switches to a polling watcher when `inotifywait`
-  is missing, or install it system-wide (e.g. `sudo apt install inotify-tools`) to restore the
-  faster inotify backend.
+* **Stale binaries**: Remove the `vendor/` directory and re-run `./install.sh`.
 
-## Roadmap Notes
+* **Database does not exist**: Make sure PostgreSQL is running and re-run `./run.sh`, which executes `mix ecto.create`.
 
-- Expand event handlers in `lib/ryujin/consumer.ex` to coordinate with Clairemont and Providentia.
-- Integrate Rust-backed analytics (e.g., alliance scoring) through the NIF interface.
-- Document shared protocols or vocab the trio should use when negotiating with other guilds.
-- Flesh out database schemas and migrations for alliance state.
+* **Connect Observer**: The bot runs as a named node. Open a new terminal and run `iex --sname observer --cookie ryujin_cookie`, then `:observer.start()` to connect.
+
