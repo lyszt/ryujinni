@@ -8,14 +8,45 @@ defmodule Ryujin.Application do
 
   @impl true
   def start(_type, _args) do
+    bot_options = %{
+      name: Ryujin.Bot,
+      module: Ryujin.Bot,
+      consumer: Ryujin.Consumer,
+      # Intent categories (keeps intents as categories rather than per-event atoms)
+      intents: [
+        :guilds,
+        :guild_members,
+        :guild_moderation,
+        :guild_expressions,
+        :guild_integrations,
+        :guild_webhooks,
+        :guild_invites,
+        :guild_voice_states,
+        :guild_presences,
+        :guild_messages,
+        :guild_message_reactions,
+        :guild_message_typing,
+        :direct_messages,
+        :direct_message_reactions,
+        :direct_message_typing,
+        :message_content,
+        :guild_scheduled_events,
+        :auto_moderation_configuration,
+        :auto_moderation_execution,
+        :guild_message_polls,
+        :direct_message_polls
+      ],
+      wrapped_token: fn -> System.fetch_env!("DISCORD_TOKEN") end
+    }
+
     children = [
       RyujinWeb.Telemetry,
       Ryujin.Repo,
+      {Nostrum.Bot, bot_options},
       {DNSCluster, query: Application.get_env(:ryujin, :dns_cluster_query) || :ignore},
       {Finch, name: Ryujin.Finch},
       {Phoenix.PubSub, name: Ryujin.PubSub},
       RyujinWeb.Endpoint,
-      Ryujin.Consumer,
       Ryujin.CommandRegister
 
     ]
@@ -27,7 +58,8 @@ defmodule Ryujin.Application do
       fn ->
         {:ok, active_servers} = Self.guilds()
         :timer.sleep(1000)
-        Self.update_status(:online, "as noticias do império lygoniano ao #{Enum.random(active_servers).name}.", 1, "https://youtu.be/47AVNwXG3CA")
+        name = "as noticias do império lygoniano ao #{Enum.random(active_servers).name}."
+        Self.update_status(:online, {:streaming, name, "https://youtu.be/47AVNwXG3CA"})
       end
 
     )

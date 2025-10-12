@@ -1,14 +1,36 @@
 # config/runtime.exs
 import Config
-import Dotenvy
 
+# Minimal .env loader (replaces Dotenvy)
 env_dir_prefix = System.get_env("RELEASE_ROOT") || Path.expand("./envs")
 
-source!([
-  Path.absname(".env", env_dir_prefix),
-  Path.absname("#{config_env()}.env", env_dir_prefix),
-  System.get_env()
-])
+for path <- [
+      Path.absname(".env", env_dir_prefix),
+      Path.absname("#{config_env()}.env", env_dir_prefix)
+    ] do
+  if File.exists?(path) do
+    File.stream!(path)
+    |> Stream.map(&String.trim/1)
+    |> Stream.reject(fn line -> line == "" or String.starts_with?(line, "#") end)
+    |> Enum.each(fn line ->
+      case String.split(line, "=", parts: 2) do
+        [raw_key, raw_val] ->
+          key = String.trim(raw_key)
+          val = raw_val |> String.trim() |> String.trim(~s("')) |> String.trim()
+          if System.get_env(key) == nil do
+            System.put_env(key, val)
+          end
+
+        _ -> :noop
+      end
+    end)
+  end
+end
+
+bot_token = System.get_env("BOT_TOKEN") || System.get_env("DISCORD_TOKEN")
+if bot_token do
+  config :ryujin, :bot_token, bot_token
+end
 
 vendor_root = Path.expand(System.get_env("VENDOR_DIR") || "./vendor", File.cwd!())
 bin_dir = Path.join(vendor_root, "bin")
@@ -27,29 +49,30 @@ streamlink_exec =
     Path.join(streamlink_bin_dir, "streamlink")
 
 config :nostrum,
-  token: env!("DISCORD_TOKEN", :string!),
+  # Do not set :nostrum, :token here. Nostrum 0.11+
   ffmpeg: ffmpeg_exec,
   youtubedl: ytdl_exec,
   streamlink: streamlink_exec,
   gateway_intents: [
-      :guilds,
-      :guild_members,
-      :guild_bans,
-      :guild_emojis,
-      :guild_integrations,
-      :guild_webhooks,
-      :guild_invites,
-      :guild_voice_states,
-      :guild_presences,
-      :guild_messages,
-      :guild_message_reactions,
-      :guild_message_typing,
-      :direct_messages,
-      :direct_message_reactions,
-      :direct_message_typing,
-      :message_content,
-      :guild_scheduled_events
-    ]
+    :guilds,
+    :guild_members,
+    :guild_bans,
+    :guild_emojis,
+    :guild_integrations,
+    :guild_webhooks,
+    :guild_invites,
+    :guild_voice_states,
+    :guild_presences,
+    :guild_messages,
+    :guild_message_reactions,
+    :guild_message_typing,
+    :direct_messages,
+    :direct_message_reactions,
+    :direct_message_typing,
+    :message_content,
+    :guild_scheduled_events
+  ]
+
 if System.get_env("PHX_SERVER") do
   config :ryujin, RyujinWeb.Endpoint, server: true
 end
@@ -70,6 +93,7 @@ if config_env() == :prod do
     socket_options: maybe_ipv6,
     parameters: [search_path: "ag_catalog,\"$user\",public"]
 
+
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -89,4 +113,8 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base
+
+  config :ryujin, Ryujin.Bot,
+    token: System.get_env("DISCORD_TOKEN"),
+    num_shards: :auto
 end

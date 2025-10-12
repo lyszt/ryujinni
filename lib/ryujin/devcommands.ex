@@ -1,7 +1,14 @@
-
-defmodule DevCommands do
+defmodule Ryujin.DevCommands do
   def clear_bot_commands do
-      Nostrum.Api.ApplicationCommand.bulk_overwrite_global_commands([])
-      IO.puts("All commands for Ryujin have been removed and cleaned. Restart the bot for changes.")
+    commands = Ryujin.CommandRegister.commands()
+
+    Nostrum.Api.ApplicationCommand.bulk_overwrite_global_commands(commands)
+    {:ok, guilds} = Nostrum.Api.Self.guilds()
+
+    Enum.each(guilds, fn %Nostrum.Struct.Guild{id: guild_id} ->
+      Nostrum.Api.ApplicationCommand.bulk_overwrite_guild_commands(guild_id, commands)
+    end)
+
+    :ok
   end
 end

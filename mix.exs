@@ -63,8 +63,7 @@ defmodule Ryujin.MixProject do
       {:gettext, "~> 0.26"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:nostrum, "~> 0.10"},
-      {:dotenvy, "~> 1.0.0"}, # for local env vars
+  {:nostrum, github: "Kraigie/nostrum"},
       {:rustler, "~> 0.37.1", runtime: false}, # Rust
       {:jason, "~> 1.4"}, # JSON parsing
       {:finch, "~> 0.18"}

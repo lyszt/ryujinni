@@ -1,7 +1,5 @@
 # RYUJIN commands
 
-
-
 defmodule Ryujin.CommandRegister do
   use GenServer
   require Logger
@@ -15,7 +13,15 @@ defmodule Ryujin.CommandRegister do
     },
     %{
       name: "play",
-      description: "Toque uma bela música para seus amigos."
+      description: "Toque uma bela música para seus amigos.",
+      options: [
+        %{
+          name: "query",
+          description: "URL ou termo de busca para reproduzir",
+          type: 3,
+          required: true
+        }
+      ]
     },
     %{
       name: "leave",
@@ -23,11 +29,13 @@ defmodule Ryujin.CommandRegister do
     },
     %{
       name: "camara_eventos",
-      description: "Veja uma lista de eventos previstos nos diversos orgãos da câmara de deputados."
+      description:
+        "Veja uma lista de eventos previstos nos diversos orgãos da câmara de deputados."
     }
   ]
 
-
+  @doc "Return the commands list for registration"
+  def commands, do: @commands
 
   def start_link(_args) do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)
@@ -39,13 +47,25 @@ defmodule Ryujin.CommandRegister do
     {:ok, %{}}
   end
 
-
   @impl true
   def handle_info(:register_commands, state) do
-      Nostrum.Api.ApplicationCommand.create_global_command(@commands)
-      ApplicationCommand.bulk_overwrite_guild_commands(Lygon.id(), @commands)
-      Logger.info("Registering global commands...")
-      :timer.sleep(1000)
-      {:noreply, state}
-    end
+    Logger.info("Registering global commands...")
+    clear_bot_commands()
+    :timer.sleep(1000)
+    {:noreply, state}
+  end
+
+  defp clear_bot_commands do
+    commands = Ryujin.CommandRegister.commands()
+
+    Nostrum.Api.ApplicationCommand.bulk_overwrite_global_commands(commands)
+    {:ok, guilds} = Nostrum.Api.Self.guilds()
+
+    Enum.each(guilds, fn %Nostrum.Struct.Guild{id: guild_id} ->
+      Nostrum.Api.ApplicationCommand.bulk_overwrite_guild_commands(guild_id, commands)
+    end)
+
+    :ok
+  end
+
 end
