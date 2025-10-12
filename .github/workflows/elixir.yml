@@ -34,16 +34,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install psql client
+      - name: Install runner-side psql (minimal)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends postgresql-client
 
-      - name: Wait for Postgres to be ready
+      - name: Wait for Postgres to accept connections (quiet, bounded)
         env:
           PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: |
-          timeout 60 bash -c 'until pg_isready -h postgres -p 5432 -U postgres >/dev/null 2>&1; do sleep 1; done'
+          timeout 60 bash -c 'until psql -h postgres -U postgres -d "${POSTGRES_DB}" -c "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
 
       - name: Ensure AGE extension exists
         env:
