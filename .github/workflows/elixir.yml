@@ -34,23 +34,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install runner-side psql (minimal)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends postgresql-client
-
-      - name: Wait for Postgres to accept connections (quiet, bounded)
-        env:
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        run: |
-          timeout 60 bash -c 'until psql -h postgres -U postgres -d "${POSTGRES_DB}" -c "SELECT 1" >/dev/null 2>&1; do sleep 1; done'
-
-      - name: Ensure AGE extension exists
-        env:
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        run: |
-          psql -h postgres -U postgres -d "${POSTGRES_DB}" -c "CREATE EXTENSION IF NOT EXISTS age;"
-
       - name: Set up Elixir and Erlang/OTP
         uses: erlef/setup-beam@v1.16.0
         with:
@@ -78,5 +61,4 @@ jobs:
       - name: Run tests
         env:
           DATABASE_URL: ${{ env.DATABASE_URL }}
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: mix test
