@@ -15,6 +15,7 @@ env:
   POSTGRES_DB: ryujin_test
   ELIXIR_VERSION: "1.18.4"
   OTP_VERSION: "28.0"
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ryujin_test
 
 jobs:
   build:
@@ -28,49 +29,27 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: ryujin_test
-        options: >-
-          --health-cmd "pg_isready -h localhost -p 5432 -U postgres -d ryujin_test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 10
-
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/ryujin_test
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install runner-side DB tools
+      - name: Install psql client
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends postgresql-client ca-certificates
+          sudo apt-get install -y --no-install-recommends postgresql-client
 
-      - name: Wait for Postgres to accept connections
+      - name: Wait for Postgres to be ready
         env:
           PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: |
-          for i in $(seq 1 30); do
-            if pg_isready -h postgres -p 5432 -U postgres -d ryujin_test; then
-              echo "Postgres is ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "Postgres did not become ready in time" >&2
-          exit 1
-
-      - name: Ensure DB role 'root' exists (no-op if exists)
-        env:
-          PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        run: |
-          psql -h postgres -U postgres -d ryujin_test -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'root') THEN CREATE ROLE root WITH SUPERUSER LOGIN PASSWORD 'root'; END IF; END \$\$;"
+          timeout 60 bash -c 'until pg_isready -h postgres -p 5432 -U postgres >/dev/null 2>&1; do sleep 1; done'
 
       - name: Ensure AGE extension exists
         env:
           PGPASSWORD: ${{ env.POSTGRES_PASSWORD }}
         run: |
-          psql -h postgres -U postgres -d ryujin_test -c "CREATE EXTENSION IF NOT EXISTS age;"
+          psql -h postgres -U postgres -d "${POSTGRES_DB}" -c "CREATE EXTENSION IF NOT EXISTS age;"
 
       - name: Set up Elixir and Erlang/OTP
         uses: erlef/setup-beam@v1.16.0
