@@ -24,6 +24,7 @@ Ensure the helper scripts are executable before starting:
 ```bash
 chmod +x install.sh run.sh
 ```
+![Repository Chart Report](chart-report.png)
 
 ## ◆ Configuration
 
