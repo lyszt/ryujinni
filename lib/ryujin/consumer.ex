@@ -62,7 +62,15 @@ defmodule Ryujin.Consumer do
     case check_if_incall(interaction) do
       {:ok, voice_channel} ->
         case get_option(interaction, "query") do
-          {:ok, url} when is_binary(url) and byte_size(url) > 0 ->
+          {:ok, raw} when is_binary(raw) and byte_size(raw) > 0 ->
+            # If the user provided a plain search term (not a URL), convert it to a yt-dlp search
+            url =
+              if Regex.match?(~r/^https?:\/\//i, raw) do
+                raw
+              else
+                "ytsearch:" <> String.trim(raw)
+              end
+
             case VoiceSession.join(interaction.guild_id, voice_channel) do
               :ok ->
                 Nostrum.Api.Interaction.create_response(interaction,  %{
