@@ -1,6 +1,6 @@
 # Ryujin
 
-![Traveler traveling across the fields of a foreign land](https://i.pinimg.com/736x/66/ae/1c/66ae1c45850b48307a8927b25cabd976.jpg)
+<img width="736" height="1104" alt="image" src="https://github.com/user-attachments/assets/d9a3c109-6ce9-4f03-921d-e8cd8868b791" />
 
 Ryujin is the diplomatic liaison module for the Clairemont bot. While other modules in the system handle security and administration, Ryujin's focus is on cultivating allied relationships, coordinating joint initiatives, and maintaining calm in inter-guild channels. It is built on Elixir with Nostrum and designed to extend into Rust-backed features for high-performance tasks.
 
