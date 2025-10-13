@@ -17,17 +17,20 @@ for path <- [
         [raw_key, raw_val] ->
           key = String.trim(raw_key)
           val = raw_val |> String.trim() |> String.trim(~s("')) |> String.trim()
+
           if System.get_env(key) == nil do
             System.put_env(key, val)
           end
 
-        _ -> :noop
+        _ ->
+          :noop
       end
     end)
   end
 end
 
 bot_token = System.get_env("BOT_TOKEN") || System.get_env("DISCORD_TOKEN")
+
 if bot_token do
   config :ryujin, :bot_token, bot_token
 end
@@ -92,7 +95,6 @@ if config_env() == :prod do
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
     socket_options: maybe_ipv6,
     parameters: [search_path: "ag_catalog,\"$user\",public"]
-
 
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||

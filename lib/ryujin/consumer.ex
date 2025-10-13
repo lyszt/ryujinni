@@ -1,11 +1,10 @@
 defmodule Ryujin.Consumer do
   @behaviour Nostrum.Consumer
   require Logger
-  alias Nostrum.Cache.GuildCache
-  alias Nostrum.Voice
   alias Nostrum.Api.Message
-  alias Nostrum.Struct.{Interaction, VoiceState}
-  alias Nostrum.Api.Self
+  alias Nostrum.Cache.GuildCache
+  alias Nostrum.Struct.Interaction
+  alias Ryujin.VoiceSession
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     lowered_msg = String.downcase(msg.content)
@@ -31,7 +30,15 @@ defmodule Ryujin.Consumer do
           }
         })
 
-        Nostrum.Voice.join_channel(interaction.guild_id, voice_channel)
+        case VoiceSession.join(interaction.guild_id, voice_channel) do
+          :ok ->
+            :ok
+
+          {:error, reason} ->
+            Logger.warning(
+              "Failed to ensure voice session for guild #{interaction.guild_id}: #{inspect(reason)}"
+            )
+        end
 
       {:not_found, nil} ->
         Nostrum.Api.Interaction.create_response(interaction, %{
@@ -54,18 +61,34 @@ defmodule Ryujin.Consumer do
       ) do
     case check_if_incall(interaction) do
       {:ok, voice_channel} ->
-
-        try do
-          Nostrum.Voice.join_channel(interaction.guild_id, voice_channel)
-        rescue
-          e in RuntimeError ->
-            Logger.info("Tried joining call on /play command but failed: #{e.message}")
-        end
-
         case get_option(interaction, "query") do
           {:ok, url} when is_binary(url) and byte_size(url) > 0 ->
-            Message.create(interaction.channel.id, "Tocando #{url}.")
-            play_when_ready(interaction.guild_id, url, :ytdl)
+            case VoiceSession.join(interaction.guild_id, voice_channel) do
+              :ok ->
+                Nostrum.Api.Interaction.create_response(interaction,  %{
+                  type: 4,
+                  data: %{
+                    content:
+                      "> Tocando #{url}.",
+                    flags: 64
+                  }
+                })
+                VoiceSession.play(interaction.guild_id, url, :ytdl)
+
+              {:error, reason} ->
+                Logger.warning(
+                  "Failed to join voice before playing on guild #{interaction.guild_id}: #{inspect(reason)}"
+                )
+
+                Nostrum.Api.Interaction.create_response(interaction, %{
+                  type: 4,
+                  data: %{
+                    content:
+                      "> Não consegui entrar na chamada para tocar a música. Tente novamente.",
+                    flags: 64
+                  }
+                })
+            end
 
           {:error, :missing} ->
             Nostrum.Api.Interaction.create_response(interaction, %{
@@ -101,7 +124,7 @@ defmodule Ryujin.Consumer do
   def handle_event(
         {:INTERACTION_CREATE, %Interaction{data: %{name: "leave"}} = interaction, _ws_state}
       ) do
-    Nostrum.Voice.leave_channel(interaction.guild_id)
+    VoiceSession.leave(interaction.guild_id)
 
     Nostrum.Api.Interaction.create_response(interaction, %{
       type: 4,
@@ -181,7 +204,7 @@ defmodule Ryujin.Consumer do
   # PRIVATE
 
   defp check_if_incall(interaction) do
-    case Nostrum.Cache.GuildCache.get(interaction.guild_id) do
+    case GuildCache.get(interaction.guild_id) do
       {:ok, guild = %Nostrum.Struct.Guild{}} ->
         voice_states = guild.voice_states
 
@@ -205,7 +228,8 @@ defmodule Ryujin.Consumer do
   end
 
   # Helper to fetch an option value by name from an Interaction's data
-  defp get_option(%Interaction{data: %{options: options}} = _interaction, name) when is_list(options) do
+  defp get_option(%Interaction{data: %{options: options}} = _interaction, name)
+       when is_list(options) do
     case Enum.find(options, fn opt -> Map.get(opt, :name) == name end) do
       %{value: value} -> {:ok, value}
       _ -> {:error, :missing}
@@ -215,18 +239,6 @@ defmodule Ryujin.Consumer do
   # Fallback: when options isn't a list or option isn't found
   defp get_option(_interaction, _name), do: {:error, :missing}
 
-  defp play_when_ready(guild_id, url, type, opts \\ []) do
-      if Voice.ready?(guild_id) do
-        Voice.play(guild_id, url, type, opts)
-      else
-        # Wait for handshaking to complete
-        Process.sleep(25)
-        play_when_ready(guild_id, url, type, opts)
-      end
-  end
-
   @impl true
   def handle_event(_), do: :ok
-
-
 end

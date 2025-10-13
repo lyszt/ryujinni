@@ -42,27 +42,26 @@ defmodule Ryujin.Application do
     children = [
       RyujinWeb.Telemetry,
       Ryujin.Repo,
+      {Registry, keys: :unique, name: Ryujin.VoiceRegistry},
+      Ryujin.VoiceSupervisor,
       {Nostrum.Bot, bot_options},
       {DNSCluster, query: Application.get_env(:ryujin, :dns_cluster_query) || :ignore},
       {Finch, name: Ryujin.Finch},
       {Phoenix.PubSub, name: Ryujin.PubSub},
       RyujinWeb.Endpoint,
       Ryujin.CommandRegister
-
     ]
 
     opts = [strategy: :one_for_one, name: Ryujin.Supervisor]
     {:ok, pid} = Supervisor.start_link(children, opts)
 
-    Task.start(
-      fn ->
-        {:ok, active_servers} = Self.guilds()
-        :timer.sleep(1000)
-        name = "as noticias do império lygoniano ao #{Enum.random(active_servers).name}."
-        Self.update_status(:online, {:streaming, name, "https://youtu.be/47AVNwXG3CA"})
-      end
+    Task.start(fn ->
+      {:ok, active_servers} = Self.guilds()
+      :timer.sleep(1000)
+      name = "as noticias do império lygoniano ao #{Enum.random(active_servers).name}."
+      Self.update_status(:online, {:streaming, name, "https://youtu.be/47AVNwXG3CA"})
+    end)
 
-    )
     {:ok, pid}
   end
 
@@ -71,5 +70,4 @@ defmodule Ryujin.Application do
     RyujinWeb.Endpoint.config_change(changed, removed)
     :ok
   end
-
 end

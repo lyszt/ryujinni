@@ -49,13 +49,15 @@ defmodule CamaraApi.Eventos do
       title: event["descricaoTipo"] || "Evento",
       description: event["descricao"] || "Sem descrição",
       start_time: event["dataHoraInicio"] || "N/A",
-      location: Map.get(event, "localCamara", %{})["nome"] || Map.get(event, "localExterno") || "Local Desconhecido",
+      location:
+        Map.get(event, "localCamara", %{})["nome"] || Map.get(event, "localExterno") ||
+          "Local Desconhecido",
       situation: event["situacao"] || "N/A",
       uri: event["uri"] || "https://dadosabertos.camara.leg.br",
       organs:
         case Map.get(event, "orgaos") do
           nil -> "N/A"
-          organs_list -> Enum.map_join(organs_list, ", ", &(&1["sigla"]))
+          organs_list -> Enum.map_join(organs_list, ", ", & &1["sigla"])
         end
     }
   end

@@ -4,11 +4,9 @@ defmodule Ryujin.Types do
   """
 
   @type activity() ::
-
-    {:playing, String.t()} |
-    {:streaming, String.t(), String.t()} |
-    {:listening, String.t()} |
-    {:watching, String.t()} |
-    {:competing, String.t()
-  }
+          {:playing, String.t()}
+          | {:streaming, String.t(), String.t()}
+          | {:listening, String.t()}
+          | {:watching, String.t()}
+          | {:competing, String.t()}
 end

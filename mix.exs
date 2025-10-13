@@ -63,9 +63,11 @@ defmodule Ryujin.MixProject do
       {:gettext, "~> 0.26"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-  {:nostrum, github: "Kraigie/nostrum"},
-      {:rustler, "~> 0.37.1", runtime: false}, # Rust
-      {:jason, "~> 1.4"}, # JSON parsing
+      {:nostrum, github: "Kraigie/nostrum"},
+      # Rust
+      {:rustler, "~> 0.37.1", runtime: false},
+      # JSON parsing
+      {:jason, "~> 1.4"},
       {:finch, "~> 0.18"}
       # {:dep_from_hexpm, "~> 0.3.0"},
       # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}

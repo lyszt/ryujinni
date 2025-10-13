@@ -26,6 +26,7 @@ defmodule Ryujin.Repo.Migrations.EnablePostgresAge do
     END
     $$;
     """)
+
     execute("DROP EXTENSION IF EXISTS age CASCADE;")
   end
 end

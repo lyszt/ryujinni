@@ -67,5 +67,4 @@ defmodule Ryujin.CommandRegister do
 
     :ok
   end
-
 end
