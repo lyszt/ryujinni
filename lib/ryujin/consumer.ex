@@ -5,12 +5,14 @@ defmodule Ryujin.Consumer do
   alias Nostrum.Cache.GuildCache
   alias Nostrum.Struct.Interaction
   alias Ryujin.VoiceSession
+  alias Ryujin.Speech
 
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     lowered_msg = String.downcase(msg.content)
-
-    if String.contains?(lowered_msg, "ryu") or String.contains?(lowered_msg, "ryujinni") do
-      {:ok, _message} = Message.create(msg.channel_id, "Hello!")
+    {:ok, app_info} = Nostrum.Api.Self.application_information()
+    id_message = "<#{app_info["id"]}>"
+    if String.contains?(lowered_msg, id_message) or String.contains?(lowered_msg, "claire") or String.contains?(lowered_msg, "clairemont") do
+      {:ok, _message} = Message.create(msg.channel_id, Speech.answer_quickly(msg.content))
     end
   end
 
