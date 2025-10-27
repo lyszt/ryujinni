@@ -5,8 +5,8 @@ defmodule Ryujin.Speech do
 
 
     def answer_quickly(message) do
-      response = get_simple_response(message.response)
-      response
+      {:ok, responseStruct} = get_simple_response(message)
+      responseStruct["response"]
     end
 
     defp get_simple_response(message) do
