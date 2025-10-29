@@ -29,7 +29,8 @@ defmodule Ryujin.Speech do
         request_body = Jason.encode!(%{prompt: message})
         request = Finch.build(:post, url, headers, request_body)
 
-        case Finch.request(request, @finch) do
+  # Needs a huge timout in case Providentia overthinks
+  case Finch.request(request, @finch, receive_timeout: 200_000) do
         {:ok, %Finch.Response{status: 200, body: body}} ->
           case Jason.decode(body, keys: :strings) do
             {:ok, data} -> {:ok, data}
