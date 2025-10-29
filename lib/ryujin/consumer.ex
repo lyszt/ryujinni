@@ -11,8 +11,10 @@ defmodule Ryujin.Consumer do
     lowered_msg = String.downcase(msg.content)
     {:ok, app_info} = Nostrum.Api.Self.application_information()
     id_message = "<#{app_info["id"]}>"
-    if String.contains?(lowered_msg, id_message) or String.contains?(lowered_msg, "claire") or String.contains?(lowered_msg, "clairemont") do
-      {:ok, _message} = Message.create(msg.channel_id, Speech.answer_quickly(msg.content))
+    if msg.author.id != app_info["id"] and String.contains?(lowered_msg, id_message) or String.contains?(lowered_msg, "claire") or String.contains?(lowered_msg, "clairemont") do
+      {:ok, _message} = Message.create(
+      msg.channel_id,
+      embed: Speech.answer_quickly(msg.content))
     end
   end
 

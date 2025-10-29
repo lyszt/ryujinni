@@ -6,7 +6,21 @@ defmodule Ryujin.Speech do
 
     def answer_quickly(message) do
       {:ok, responseStruct} = get_simple_response(message)
-      responseStruct["response"]
+      create_message_embed(responseStruct["response"])
+    end
+
+    defp create_message_embed(message_string) do
+      embed_payload = %Nostrum.Struct.Embed{
+      title: "Clairemont responds...",
+      description: message_string,
+      color: 14_423_100,
+      footer: %Nostrum.Struct.Embed.Footer
+      {
+        text: "Powered by PROVIDENCE."
+      }
+      }
+
+      embed_payload
     end
 
     defp get_simple_response(message) do
@@ -28,5 +42,6 @@ defmodule Ryujin.Speech do
       {:error, reason} ->
         {:error, "HTTP request failed: #{inspect(reason)}"}
     end
+
     end
 end
