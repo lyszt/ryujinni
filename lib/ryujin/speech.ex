@@ -22,7 +22,7 @@ defmodule Ryujin.Speech do
   end
 
   defp get_simple_response(message) do
-    url = @base_url <> "answer"
+    url = @base_url <> "answer/"
     headers = [{"content-type", "application/json"}]
     request_body = Jason.encode!(%{prompt: message})
     request = Finch.build(:post, url, headers, request_body)
