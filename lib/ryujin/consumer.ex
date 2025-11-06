@@ -10,11 +10,38 @@ defmodule Ryujin.Consumer do
   def handle_event({:MESSAGE_CREATE, msg, _ws_state}) do
     lowered_msg = String.downcase(msg.content)
     {:ok, app_info} = Nostrum.Api.Self.application_information()
-    id_message = "<#{app_info["id"]}>"
-    if msg.author.id != app_info["id"] and String.contains?(lowered_msg, id_message) or String.contains?(lowered_msg, "claire") or String.contains?(lowered_msg, "clairemont") do
-      {:ok, _message} = Message.create(
-      msg.channel_id,
-      embed: Speech.answer_quickly(msg.content))
+    id_message = "<@#{app_info["id"]}>"
+    last_messages = get_last_messages()
+
+    Enum.each(
+      last_messages,
+      fn message ->
+        if message.author.id == app_info["id"] do
+          answer_individual(msg)
+        end
+      end
+    )
+
+    # First, verify if the author is not oneself
+    if msg.author.id != app_info["id"] do
+      # Check if it it's referencing the bot
+      if String.contains?(lowered_msg, id_message) or String.contains?(lowered_msg, "claire") or
+           String.contains?(lowered_msg, "clairemont") do
+        answer_individual(msg)
+      end
+    end
+
+    defp answer_individual(msg) do
+      {:ok, message} =
+        Message.create(
+          msg.channel_id,
+          embed: Speech.answer_quickly(msg.content)
+        )
+    end
+
+    defp get_last_messages(channel_id) do
+      {:ok, message} = Nostrum.Api.Channel.messages(channel_id, 2)
+      message
     end
   end
 
@@ -77,14 +104,14 @@ defmodule Ryujin.Consumer do
 
             case VoiceSession.join(interaction.guild_id, voice_channel) do
               :ok ->
-                Nostrum.Api.Interaction.create_response(interaction,  %{
+                Nostrum.Api.Interaction.create_response(interaction, %{
                   type: 4,
                   data: %{
-                    content:
-                      "> Tocando #{url}.",
+                    content: "> Tocando #{url}.",
                     flags: 64
                   }
                 })
+
                 VoiceSession.play(interaction.guild_id, url, :ytdl)
 
               {:error, reason} ->
