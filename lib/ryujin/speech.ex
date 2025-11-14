@@ -2,10 +2,19 @@ defmodule Ryujin.Speech do
   # Mudar isso para o servidor da Providentia
   @base_url "http://0.0.0.0:8000/speech/"
   @finch Ryujin.Finch
+  require Logger
 
-  def answer_quickly(message) do
-    {:ok, responseStruct} = get_simple_response(message)
-    create_message_embed(responseStruct["response"])
+  def answer_quickly(message, channel_id) do
+    {:ok, responseStruct} = get_simple_response(message, channel_id)
+
+    case create_message_embed(responseStruct["response"]) do
+      {:ok, embed} ->
+        {:ok, embed}
+
+      {:error, reason} ->
+        Logger.info("Error ocurred in fast response: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 
   defp create_message_embed(message_string) do
@@ -18,16 +27,42 @@ defmodule Ryujin.Speech do
       }
     }
 
-    embed_payload
+    {:ok, embed_payload}
   end
 
-  defp get_simple_response(message) do
+  defp get_context(channel_id) do
+    case Nostrum.Api.Channel.messages(channel_id, 6) do
+      {:ok, messages} ->
+        {:ok, messages}
+
+      {:error, reason} ->
+        Logger.info("Error finding message context: #{inspect(reason)}")
+    end
+  end
+
+  defp get_simple_response(message, channel_id) do
     url = @base_url <> "answer/"
     headers = [{"content-type", "application/json"}]
-    request_body = Jason.encode!(%{prompt: message})
+
+    context =
+      case get_context(channel_id) do
+        {:ok, messages} ->
+          messages
+          |> Enum.reverse()
+          |> Enum.map(&(&1.author.username <> ":" <> &1.content))
+          |> Enum.join("\n")
+
+        {:error, reason} ->
+          Logger.info("Error could not convert messages: #{inspect(reason)}")
+          ""
+      end
+
+    message_with_context = "#{message} -- CHAT CONTEXT: #{context}"
+
+    request_body = Jason.encode!(%{prompt: message_with_context})
     request = Finch.build(:post, url, headers, request_body)
 
-    # Needs a huge timout in case Providentia overthinks
+    # Needs a huge timeout in case Providentia overthinks
     case Finch.request(request, @finch, receive_timeout: 200_000) do
       {:ok, %Finch.Response{status: 200, body: body}} ->
         case Jason.decode(body, keys: :strings) do
